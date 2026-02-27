@@ -145,11 +145,13 @@ func (h *REST) SubmitTask(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
-	json.NewEncoder(w).Encode(SubmitTaskResponse{
+	if err := json.NewEncoder(w).Encode(SubmitTaskResponse{
 		TaskID:    taskID,
 		Status:    string(domain.StatusPending),
 		CreatedAt: now,
-	})
+	}); err != nil {
+		h.logger.Error("encode submit response", slog.String("error", err.Error()))
+	}
 }
 
 // GetTaskStatus handles GET /api/v1/tasks/{id}.
@@ -204,14 +206,16 @@ func (h *REST) GetTaskStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		h.logger.Error("encode status response", slog.String("error", err.Error()))
+	}
 }
 
 // Healthz handles GET /healthz.
 func (h *REST) Healthz(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"ok"}`))
+	_, _ = w.Write([]byte(`{"status":"ok"}`))
 }
 
 // Readyz handles GET /readyz — checks Redis connectivity.
@@ -229,11 +233,11 @@ func (h *REST) Readyz(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"ready"}`))
+	_, _ = w.Write([]byte(`{"status":"ready"}`))
 }
 
 func writeError(w http.ResponseWriter, code int, msg string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(map[string]string{"error": msg})
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": msg})
 }

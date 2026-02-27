@@ -82,13 +82,13 @@ func runServe(_ *cobra.Command, _ []string) error {
 	groupID := "worker-" + cfg.WorkerType + "-group"
 
 	consumer := kafka.NewConsumer(brokers, topic, groupID, logger)
-	defer consumer.Close()
+	defer func() { _ = consumer.Close() }()
 
 	producer := kafka.NewProducer(brokers)
-	defer producer.Close()
+	defer func() { _ = producer.Close() }()
 
 	redisClient := redisstore.NewClient(cfg.RedisAddr)
-	defer redisClient.Close()
+	defer func() { _ = redisClient.Close() }()
 	store := redisstore.NewStateStore(redisClient)
 
 	initCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

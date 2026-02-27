@@ -92,10 +92,19 @@ func (s *Scheduler) tick(ctx context.Context) {
 
 // acquireOrRenewLeadership attempts SETNX; returns true if this instance is the leader.
 func (s *Scheduler) acquireOrRenewLeadership(ctx context.Context) bool {
-	// Attempt to become leader.
-	ok, err := s.redis.SetNX(ctx, leaderKey, s.instanceID, leaderTTL).Result()
-	if err != nil {
-		s.logger.Error("leader election SetNX", slog.String("error", err.Error()))
+	// Attempt to become leader using SET NX (atomic set-if-not-exists).
+	err := s.redis.SetArgs(ctx, leaderKey, s.instanceID, redis.SetArgs{
+		Mode: "NX",
+		TTL:  leaderTTL,
+	}).Err()
+	var ok bool
+	switch {
+	case err == nil:
+		ok = true
+	case errors.Is(err, redis.Nil):
+		ok = false // key already exists, another instance is leader
+	default:
+		s.logger.Error("leader election SetArgs", slog.String("error", err.Error()))
 		return false
 	}
 	if ok {

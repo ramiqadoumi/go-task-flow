@@ -67,10 +67,10 @@ func runServe(_ *cobra.Command, _ []string) error {
 
 	brokers := strings.Split(cfg.KafkaBrokers, ",")
 	producer := kafka.NewProducer(brokers)
-	defer producer.Close()
+	defer func() { _ = producer.Close() }()
 
 	redisClient := redisstore.NewClient(cfg.RedisAddr)
-	defer redisClient.Close()
+	defer func() { _ = redisClient.Close() }()
 	store := redisstore.NewStateStore(redisClient)
 
 	initCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

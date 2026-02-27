@@ -86,7 +86,7 @@ func (h *WebhookHandler) Handle(ctx context.Context, task *domain.Task) error {
 		span.SetStatus(codes.Error, "http call failed")
 		return fmt.Errorf("webhook call to %s: %w", p.URL, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	span.SetAttributes(attribute.Int("http.status_code", resp.StatusCode))
 	if resp.StatusCode >= http.StatusBadRequest {

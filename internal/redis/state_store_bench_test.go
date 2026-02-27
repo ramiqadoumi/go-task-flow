@@ -21,7 +21,7 @@ func newBenchClient(b *testing.B) *redis.Client {
 	if err := c.Ping(context.Background()).Err(); err != nil {
 		b.Skipf("Redis not available at localhost:6379: %v", err)
 	}
-	b.Cleanup(func() { c.Close() })
+	b.Cleanup(func() { _ = c.Close() })
 	return c
 }
 

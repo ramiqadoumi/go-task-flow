@@ -54,7 +54,7 @@ func runServe(_ *cobra.Command, _ []string) error {
 
 	brokers := strings.Split(cfg.KafkaBrokers, ",")
 	producer := kafka.NewProducer(brokers)
-	defer producer.Close()
+	defer func() { _ = producer.Close() }()
 
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:         cfg.RedisAddr,
@@ -62,7 +62,7 @@ func runServe(_ *cobra.Command, _ []string) error {
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 1 * time.Second,
 	})
-	defer redisClient.Close()
+	defer func() { _ = redisClient.Close() }()
 
 	initCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	pool, err := postgres.NewPool(initCtx, cfg.PostgresDSN)

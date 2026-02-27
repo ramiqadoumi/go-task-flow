@@ -1,0 +1,114 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "API Gateway",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/api-gateway",
+            "args": [
+                "serve",
+                "--http-port", "8080",
+                "--grpc-port", "9090",
+                "--metrics-addr", ":9095",
+                "--kafka-brokers", "localhost:9092",
+                "--redis-addr", "localhost:6379",
+                "--postgres-dsn", "postgres://taskflow:taskflow@localhost:5432/taskflow?sslmode=disable",
+                "--log-level", "debug"
+            ]
+        },
+        {
+            "name": "Dispatcher",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/dispatcher",
+            "args": [
+                "serve",
+                "--kafka-brokers", "localhost:9092",
+                "--redis-addr", "localhost:6379",
+                "--metrics-addr", ":9094",
+                "--rate-limit", "100",
+                "--log-level", "debug"
+            ]
+        },
+        {
+            "name": "Worker (email)",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/worker",
+            "args": [
+                "serve",
+                "--worker-type", "email",
+                "--kafka-brokers", "localhost:9092",
+                "--redis-addr", "localhost:6379",
+                "--postgres-dsn", "postgres://taskflow:taskflow@localhost:5432/taskflow?sslmode=disable",
+                "--smtp-host", "localhost",
+                "--smtp-port", "1025",
+                "--smtp-from", "noreply@taskflow.dev",
+                "--metrics-addr", ":9091",
+                "--max-retries", "3",
+                "--task-timeout", "30s",
+                "--log-level", "debug"
+            ]
+        },
+        {
+            "name": "Worker (webhook)",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/worker",
+            "args": [
+                "serve",
+                "--worker-type", "webhook",
+                "--kafka-brokers", "localhost:9092",
+                "--redis-addr", "localhost:6379",
+                "--postgres-dsn", "postgres://taskflow:taskflow@localhost:5432/taskflow?sslmode=disable",
+                "--metrics-addr", ":9092",
+                "--max-retries", "3",
+                "--task-timeout", "30s",
+                "--log-level", "debug"
+            ]
+        },
+        {
+            "name": "Scheduler",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/scheduler",
+            "args": [
+                "serve",
+                "--kafka-brokers", "localhost:9092",
+                "--redis-addr", "localhost:6379",
+                "--postgres-dsn", "postgres://taskflow:taskflow@localhost:5432/taskflow?sslmode=disable",
+                "--metrics-addr", ":9093",
+                "--log-level", "debug"
+            ]
+        }
+    ],
+    "compounds": [
+        {
+            "name": "All Services",
+            "configurations": [
+                "API Gateway",
+                "Dispatcher",
+                "Worker (email)",
+                "Worker (webhook)",
+                "Scheduler"
+            ],
+            "stopAll": true
+        },
+        {
+            "name": "Core (no scheduler)",
+            "configurations": [
+                "API Gateway",
+                "Dispatcher",
+                "Worker (email)",
+                "Worker (webhook)"
+            ],
+            "stopAll": true
+        }
+    ]
+}

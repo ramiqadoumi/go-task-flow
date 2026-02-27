@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-webhook
+  namespace: default
+  labels:
+    app: worker-webhook
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: worker-webhook
+  template:
+    metadata:
+      labels:
+        app: worker-webhook
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9091"
+        prometheus.io/path: "/metrics"
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: worker
+          image: go-task-flow/worker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: metrics
+              containerPort: 9091
+          env:
+            - name: WORKER_TYPE
+              value: "webhook"
+            - name: KAFKA_BROKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: taskflow-config
+                  key: KAFKA_BROKERS
+            - name: REDIS_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: taskflow-config
+                  key: REDIS_ADDR
+            - name: MAX_RETRIES
+              valueFrom:
+                configMapKeyRef:
+                  name: taskflow-config
+                  key: MAX_RETRIES
+            - name: TASK_TIMEOUT
+              valueFrom:
+                configMapKeyRef:
+                  name: taskflow-config
+                  key: TASK_TIMEOUT
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: taskflow-config
+                  key: LOG_LEVEL
+            - name: POSTGRES_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: taskflow-secret
+                  key: postgres-dsn
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: metrics
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3

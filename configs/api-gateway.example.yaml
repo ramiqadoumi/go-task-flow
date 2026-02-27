@@ -1,0 +1,12 @@
+# GoTaskFlow — API Gateway config
+# Copy to config.yaml and edit. Priority: CLI flag > this file > default.
+
+http_port:    "8080"
+grpc_port:    "9090"
+metrics_addr: ":9095"
+log_level:    "info"       # debug | info | warn | error
+
+kafka_brokers: "localhost:9092"
+redis_addr:    "localhost:6379"
+postgres_dsn:  "postgres://taskflow:taskflow@localhost:5432/taskflow?sslmode=disable"
+jwt_secret:    "changeme"

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: taskflow-config
+  namespace: default
+data:
+  KAFKA_BROKERS: "kafka:9092"
+  REDIS_ADDR: "redis:6379"
+  LOG_LEVEL: "info"
+  HTTP_PORT: "8080"
+  GRPC_PORT: "9090"
+  WORKER_TYPE: "email"
+  MAX_RETRIES: "3"
+  TASK_TIMEOUT: "30s"
+  RATE_LIMIT: "100"
+  SMTP_HOST: "mailhog"
+  SMTP_PORT: "1025"
+  SMTP_FROM: "noreply@taskflow.dev"

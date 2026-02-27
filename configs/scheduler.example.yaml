@@ -1,0 +1,6 @@
+# GoTaskFlow — Scheduler config
+kafka_brokers: "localhost:9092"
+redis_addr:    "localhost:6379"
+postgres_dsn:  "postgres://taskflow:taskflow@localhost:5432/taskflow?sslmode=disable"
+log_level:     "info"
+metrics_addr:  ":9093"

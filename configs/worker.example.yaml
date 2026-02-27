@@ -1,0 +1,20 @@
+# GoTaskFlow — Worker config
+kafka_brokers: "localhost:9092"
+redis_addr:    "localhost:6379"
+postgres_dsn:  "postgres://taskflow:taskflow@localhost:5432/taskflow?sslmode=disable"
+log_level:     "info"
+
+worker_type:  "email"   # email | webhook
+max_retries:  3
+task_timeout: "30s"     # accepts Go duration strings: 30s, 1m, 2m30s
+metrics_addr: ":9091"   # :9092 for a second worker instance
+
+smtp_host: "localhost"
+smtp_port: 1025
+smtp_from: "noreply@taskflow.dev"
+# --- Gmail ---
+# smtp_host:     "smtp.gmail.com"
+# smtp_port:     587
+# smtp_from:     "your@gmail.com"
+# smtp_username: "your@gmail.com"
+# smtp_password: "abcdefghijklmnop"  # Gmail App Password (not your account password)

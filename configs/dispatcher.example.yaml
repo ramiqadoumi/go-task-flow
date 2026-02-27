@@ -1,0 +1,6 @@
+# GoTaskFlow — Dispatcher config
+kafka_brokers: "localhost:9092"
+redis_addr:    "localhost:6379"
+log_level:     "info"
+rate_limit:    100          # max tasks/second per task type (0 = disabled)
+metrics_addr:  ":9094"

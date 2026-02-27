@@ -34,12 +34,21 @@ func (p *fakeProducer) Publish(_ context.Context, topic, _ string, _ []byte) err
 func (p *fakeProducer) Close() error { return nil }
 
 type fakeStore struct {
-	states map[string]domain.Status
+	states    map[string]domain.Status
+	setErrFor map[domain.Status]error // return error when setting this specific status
 }
 
-func newFakeStore() *fakeStore { return &fakeStore{states: make(map[string]domain.Status)} }
+func newFakeStore() *fakeStore {
+	return &fakeStore{
+		states:    make(map[string]domain.Status),
+		setErrFor: make(map[domain.Status]error),
+	}
+}
 
 func (s *fakeStore) SetStatus(_ context.Context, id string, st domain.Status) error {
+	if err, ok := s.setErrFor[st]; ok {
+		return err
+	}
 	s.states[id] = st
 	return nil
 }
@@ -201,6 +210,22 @@ func TestWorker_UnknownHandlerType_StatusDead(t *testing.T) {
 
 	assert.Equal(t, domain.StatusDead, store.states["task-4"])
 	assert.Contains(t, prod.topics, topicDLQ)
+}
+
+func TestWorker_SetRunningFails_OffsetNotCommitted(t *testing.T) {
+	store := newFakeStore()
+	// Simulate a Redis failure specifically when transitioning to RUNNING.
+	store.setErrFor[domain.StatusRunning] = errors.New("redis unavailable")
+
+	reg := handlers.NewRegistry()
+	reg.Register(&fakeHandler{taskType: "email"})
+
+	w := newTestWorker(&fakeProducer{}, store, newFakeRepo(), reg)
+	err := w.processMessage(context.Background(), taskMsg(t, "task-6", "email"))
+
+	// processMessage must return a non-nil error so the Kafka offset is NOT committed.
+	require.Error(t, err, "offset must not be committed when SetStatus(RUNNING) fails")
+	assert.NotEqual(t, domain.StatusRunning, store.states["task-6"])
 }
 
 func TestWorker_SucceedsOnSecondAttempt(t *testing.T) {

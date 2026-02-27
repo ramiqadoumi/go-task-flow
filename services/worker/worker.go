@@ -117,7 +117,9 @@ func (w *Worker) processMessage(consumerCtx context.Context, msg kafka.Message) 
 
 	// Idempotency: if already in a terminal state, skip.
 	if s, err := w.store.GetStatus(ctx, task.ID); err == nil && s.IsTerminal() {
-		log.Info("task already terminal, skipping", slog.String("status", string(s)))
+		alreadyProcessed := &domain.TaskAlreadyProcessedError{TaskID: task.ID, Status: s}
+		log.Info("task already terminal, skipping", slog.String("error", alreadyProcessed.Error()))
+		span.RecordError(alreadyProcessed)
 		return nil
 	}
 

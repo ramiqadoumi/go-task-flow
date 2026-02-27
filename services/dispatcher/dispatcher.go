@@ -92,7 +92,9 @@ func (d *Dispatcher) route(ctx context.Context, msg kafka.Message) error {
 			log.Error("rate limiter error", slog.String("error", err.Error()))
 			// Allow on limiter failure to avoid dropping tasks due to Redis issues.
 		} else if !allowed {
-			log.Warn("rate limit exceeded, sending to DLQ")
+			rlErr := &domain.RateLimitExceededError{TaskType: task.Type, Limit: d.limiter.Limit()}
+			log.Warn("rate limit exceeded, sending to DLQ", slog.String("error", rlErr.Error()))
+			span.RecordError(rlErr)
 			span.SetStatus(codes.Error, "rate limit exceeded")
 			telemetry.DispatcherRateLimitedTotal.Inc()
 			telemetry.DispatcherDLQTotal.Inc()

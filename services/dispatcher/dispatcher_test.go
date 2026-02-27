@@ -73,11 +73,13 @@ func (s *fakeStore) GetResult(_ context.Context, id string) ([]byte, error) {
 
 type fakeRateLimiter struct {
 	allow bool
+	limit int
 }
 
 func (r *fakeRateLimiter) Allow(_ context.Context, _ string) (bool, error) {
 	return r.allow, nil
 }
+func (r *fakeRateLimiter) Limit() int { return r.limit }
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 

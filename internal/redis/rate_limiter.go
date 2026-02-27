@@ -12,6 +12,7 @@ import (
 // RateLimiter allows or denies requests using a sliding-window count in Redis.
 type RateLimiter interface {
 	Allow(ctx context.Context, key string) (bool, error)
+	Limit() int
 }
 
 type slidingWindowLimiter struct {
@@ -25,6 +26,8 @@ type slidingWindowLimiter struct {
 func NewRateLimiter(client *redis.Client, limit int, window time.Duration) RateLimiter {
 	return &slidingWindowLimiter{client: client, limit: limit, window: window}
 }
+
+func (r *slidingWindowLimiter) Limit() int { return r.limit }
 
 // Allow returns true when the request is within the allowed rate, false when
 // it should be rejected.  It uses a Redis sorted set as a timestamp ring buffer.

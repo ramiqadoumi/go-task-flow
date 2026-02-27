@@ -1,4 +1,7 @@
-.PHONY: build test test-integration lint lint-format proto docker-up docker-down migrate bench clean
+.PHONY: build build-release test-all \
+		test-unit test-race test-cover test-integration \
+		lint lint-format proto docker-up docker-down \
+		migrate bench clean
 
 MODULE   = github.com/ramiqadoumi/go-task-flow
 SERVICES = api-gateway dispatcher worker scheduler
@@ -26,8 +29,26 @@ build:
 		go build -ldflags="$(LDFLAGS)" -o bin/$$svc ./cmd/$$svc/; \
 	done
 
-test:
-	go test -race ./...
+# Cross-compile for release; expects GOOS and GOARCH to be set.
+# Output: dist/{svc}-{GOOS}-{GOARCH}  (stripped with -s -w)
+build-release:
+	@mkdir -p dist
+	@for svc in $(SERVICES); do \
+		OUT="dist/$${svc}-$(GOOS)-$(GOARCH)"; \
+		echo "Building $$OUT"; \
+		CGO_ENABLED=0 go build -ldflags="-s -w $(LDFLAGS)" -o "$$OUT" ./cmd/$$svc/; \
+	done
+
+test-all: test-unit test-race test-cover
+
+test-unit:
+	go test -mod=readonly ./...
+
+test-race:
+	go test -mod=readonly -race ./...
+
+test-cover:
+	go test -mod=readonly -timeout 30m -race -coverprofile=coverage.out ./...
 
 test-integration:
 	go test -tags=integration -race -v -timeout=120s ./tests/integration/...

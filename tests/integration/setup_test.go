@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	kafkago "github.com/segmentio/kafka-go"
 	"github.com/testcontainers/testcontainers-go"
 	tcKafka "github.com/testcontainers/testcontainers-go/modules/kafka"
 	tcPostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -73,7 +74,12 @@ func run(m *testing.M) int {
 	}
 
 	// ── Kafka ────────────────────────────────────────────────────────────────
-	kafkaCtr, err := tcKafka.Run(ctx, "confluentinc/confluent-local:7.5.0")
+	kafkaCtr, err := tcKafka.Run(ctx, "confluentinc/confluent-local:7.7.1",
+		testcontainers.WithWaitStrategy(
+			wait.ForLog("Kafka Server started").
+				WithStartupTimeout(90*time.Second),
+		),
+	)
 	if err != nil {
 		log.Fatalf("start kafka container: %v", err)
 	}
@@ -86,6 +92,27 @@ func run(m *testing.M) int {
 	testKafkaBrokers = brokers
 
 	return m.Run()
+}
+
+// createTopic explicitly creates a Kafka topic before use.
+// Relying solely on AllowAutoTopicCreation in the producer is not reliable —
+// the first publish can race against topic creation and return UNKNOWN_TOPIC_OR_PARTITION.
+func createTopic(t *testing.T, topic string) {
+	t.Helper()
+	conn, err := kafkago.DialContext(context.Background(), "tcp", testKafkaBrokers[0])
+	if err != nil {
+		t.Fatalf("kafka dial for topic creation: %v", err)
+	}
+	defer conn.Close()
+
+	err = conn.CreateTopics(kafkago.TopicConfig{
+		Topic:             topic,
+		NumPartitions:     1,
+		ReplicationFactor: 1,
+	})
+	if err != nil {
+		t.Fatalf("create topic %q: %v", topic, err)
+	}
 }
 
 // runMigrations applies both SQL migration files to the test database.

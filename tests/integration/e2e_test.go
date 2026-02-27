@@ -58,6 +58,8 @@ func TestE2E_FullTaskLifecycle(t *testing.T) {
 	// Use unique topics to avoid interference with kafka_test.go tests.
 	pendingTopic := uniqueTopic("e2e-pending")
 	workerTopic := uniqueTopic("e2e-worker")
+	createTopic(t, pendingTopic)
+	createTopic(t, workerTopic)
 
 	// ── Step 1: API Gateway — create task, set initial state, publish ────────
 	taskID := uuid.New().String()

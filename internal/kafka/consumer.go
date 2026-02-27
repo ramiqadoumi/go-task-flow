@@ -85,7 +85,9 @@ func (c *consumer) Subscribe(ctx context.Context, handler HandlerFunc) error {
 		}
 
 		// Commit only on handler success.
-		if err := c.reader.CommitMessages(ctx, m); err != nil {
+		// Use a fresh context so a handler-triggered cancellation (e.g. graceful
+		// shutdown signalling cancel()) doesn't prevent the offset from being saved.
+		if err := c.reader.CommitMessages(context.Background(), m); err != nil {
 			c.logger.Error("failed to commit kafka offset",
 				slog.String("topic", m.Topic),
 				slog.Int64("offset", m.Offset),

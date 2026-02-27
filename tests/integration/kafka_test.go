@@ -24,6 +24,8 @@ func uniqueTopic(base string) string {
 
 func TestKafka_ProducerConsumer_RoundTrip(t *testing.T) {
 	topic := uniqueTopic("test-roundtrip")
+	createTopic(t, topic)
+
 	producer := kafka.NewProducer(testKafkaBrokers)
 	t.Cleanup(func() { producer.Close() }) //nolint:errcheck
 
@@ -59,6 +61,8 @@ func TestKafka_ProducerConsumer_RoundTrip(t *testing.T) {
 // committed, and a new consumer in the same group receives the message again.
 func TestKafka_Consumer_OffsetNotCommittedOnError(t *testing.T) {
 	topic := uniqueTopic("test-no-commit")
+	createTopic(t, topic)
+
 	groupID := fmt.Sprintf("group-no-commit-%d", time.Now().UnixNano())
 
 	producer := kafka.NewProducer(testKafkaBrokers)

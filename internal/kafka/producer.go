@@ -26,6 +26,7 @@ func NewProducer(brokers []string) Producer {
 		Balancer:     &kafka.Hash{}, // route by key → deterministic partition
 		RequiredAcks: kafka.RequireOne,
 		MaxAttempts:  3,
+		BatchSize:    1, // flush immediately — no batching (default is 100 with 1s timeout)
 		WriteTimeout: 10 * time.Second,
 		ReadTimeout:  10 * time.Second,
 		// Auto-create topics if they don't exist
